@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="./vue-2.3.0.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div class="content">
+            <div class="listing"></div>
+        </div>
+    </div>
+</body>
+<script>
+    var vm = new Vue({
+        el:'#app',
+        data:{
+            orderlist:[],
+            numtotal:'',
+            // 每页10个订单数 pagenum 总共的页数 offset 从第几个开始加载10个   0、9、19
+            pagenum:'',
+            offset:0,
+            // nowpage 储存当前已经加载的页数 targetNum 记录滚动过程中加载的页数
+            nowpage:0,
+            targetNum:-1
+        },
+        mounted:function(){
+            this.getData();
+            window.addEventListener('scroll', this.checkHeight);
+        },
+        methods:{
+            getData:function(){
+                if(this.nowpage < this.targetNum+1){
+                    return false
+                }
+                this.targetNum = this.targetNum+1;
+                this.offset = this.nowpage*10 -1;
+                // 获取订单列表信息
+                var pageinfo ={
+                    offset:this.offset,
+                    limit:10
+                    };
+                $.ajax({
+                        type:'get',
+                        dataType:'json',
+                        contentType:"application/json",
+                        url:'',
+                        data:pageinfo,
+                        success:function(data){
+                            var datalist = data.data.list;
+                            for(var i=0;i<datalist.length;i++){
+                                this.orderlist.push(datalist[i]);
+                            }
+                            this.numtotal = data.data.totalNumber;
+                            // 四舍五入记录总的页数
+                            this.pagenum = Math.ceil(this.numtotal/10);
+                        }.bind(this),
+                });
+            },
+            // 检测显示区高度
+            checkHeight:function(){
+                // 屏幕滚动的高度
+                var nowscroll = $(window).scrollTop();
+                // 总的内容高度
+                var thisHeight = $(".content").height();
+                // 一个订单详情的高度
+                var listingHeight = $(".listing").height();
+                // 四舍五入  求页面页数
+                var nowNumpage = Math.round((nowscroll/10)/listingHeight);
+                this.nowpage = nowNumpage;
+                this.getData();
+            }
+        }
+    })
+</script>
+</html>
